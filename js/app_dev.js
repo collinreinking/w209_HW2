@@ -355,6 +355,12 @@ d3.select("body")
       nReadingsPlot1.data(data);
       nReadingsPlot1.width(800);
       nReadingsPlot1.plot();
+      d3.text("data/description.txt", function(error, textData){
+        console.log(textData)
+        d3.select("body")
+        .append("pre")
+        .text(textData);
+      });
     });
   });
 

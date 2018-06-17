@@ -1,0 +1,3 @@
+The two modes of interaction that I added:
+  1)  A button to change between full time series plot and a cycle plot.
+  2)  A tool tip showing the info for each point.
