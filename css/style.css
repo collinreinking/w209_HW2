@@ -1,7 +1,7 @@
 div.tooltip {
     position: absolute;
     text-align: center;
-    width: 60px;
+    width: 80px;
     height: (14*3)px;
     padding: 2px;
     font: 12px sans-serif;
@@ -13,8 +13,9 @@ div.tooltip {
 
 .dayline {
   fill: none;
-  stroke: teal;
-  stroke-width: 0.5;
+  /* stroke: teal; */
+  stroke: url(#n_readings-gradient);
+  stroke-width: 1.5px;
 }
 
 .button rect {

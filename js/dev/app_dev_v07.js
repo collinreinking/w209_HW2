@@ -73,17 +73,12 @@ $(function() {
         .rangeRound([margin.left, margin.left + figw])
         .padding(0.3);
 
-
+        //returns a scale for the day of the week
+        //that will map the date across the band for the day
         function getDayScale(day) {
-          //returns a scale for the day of the week
-          //that will map the date across the band for the day
-
-          //get the max and min date for this day of week
           var startDate = d3.min(getAllSameWeekday(day), function(d) { return d.Date; });
           var endDate = d3.max(getAllSameWeekday(day), function(d) { return d.Date; });
 
-          //create scale using the max and min date
-          //and the bandwidth for each day of the week in the plot
           var one_day_scale = d3.scaleTime().domain([
             d3.timeDay(startDate),
             d3.timeDay(endDate)
@@ -95,7 +90,7 @@ $(function() {
 
         function compareDayDate(a,b) {
           // compares day of week first
-          // If the two have the same day of the week, compare the date
+          // If the two have the same day of the, compare the date
           if(a.day == b.day)
           {
             return (a.Date < b.Date) ? -1 : (a.Date > b.Date) ? 1 : 0;
@@ -120,23 +115,14 @@ $(function() {
         });
 
 
-        //line generate
         var plotLine = d3.line()
-        //.curve(d3.curveMonotoneX)
-        .x(function(d) {
-          var daysScale = getDayScale(d); //get the scale for the day of the week
-
-          //first scale groups days together
-          //second scale spreads date within each day
-          return (xDayOfWeekScaleBand(d.day) + daysScale(d.Date));})
+        .curve(d3.curveMonotoneX)
+        .x(function(d) {var daysScale = getDayScale(d);
+          return (daysScale(d.Date) + xDayOfWeekScaleBand(d.day));})
           .y(function(d) {return y(d.n_readings);})
 
 
-          //loop through each day of the week
-          //  create a line for each day
-          //  the primary purposes of the line is to
-          //  visually show the start and end of day groups
-          //  the slope of the line will also help show changes
+
           for (var day = 0; day <= 6; day++){
             line[day] = svg.append("path")
             .datum(getAllSameWeekday({day:day}))
@@ -144,10 +130,7 @@ $(function() {
             .attr("id", "dayline")
             .attr("d",plotLine);
 
-
             var totalLength = line[day].node().getTotalLength();
-
-            //used to animate drawing of the line
             line[day].attr("stroke-dasharray", totalLength + " " + totalLength)
             .attr("stroke-dashoffset", totalLength)
             .transition('drawLine')
@@ -159,6 +142,11 @@ $(function() {
           }
 
 
+
+
+
+
+
           xAxis = d3.axisBottom(x)
           .scale(xDayOfWeekScaleBand)
           .tickFormat(formatDay)
@@ -167,21 +155,25 @@ $(function() {
           .transition("change_to_day_axis")
           .duration(trans_duration1)
           .call(xAxis);
+          //.attr("r", circle_radius);
 
-          //animate guide lines from time series plot
-          //disappearing by having them shrink into x axis
           guide_lines
           .transition("hide_guide_lines")
           .duration(trans_duration1 + trans_duration1/2)
           .ease(d3.easePolyInOut)
+          //.attr("x1", function(d){return x(d.Date);})
+          //.attr("x2", function(d){return x(d.Date);})
+          //.attr("y1", h - margin.bottom)
+          //.attr("y2", function(d){return y(d.n_readings);})
           .attr("y2", h - margin.bottom);
 
 
 
-          //console.log('end of change to grouped by day')
+          console.log('end of change to grouped by day')
         } else {
           // switch back to timeseries plot
           current_graph_type = "timeseries"
+          console.log('bbbb')
           svg.selectAll("circle")
           .transition("revert_circles")
           .delay(trans_duration1/2)
@@ -200,9 +192,10 @@ $(function() {
           .duration(trans_duration1)
           .call(xAxis);
 
-          // undraw the line for each day
+
           for (var day = 0; day <= 6; day++){
             var totalLength = line[day].node().getTotalLength();
+            //console.log(totalLength)
             line[day]
             .transition('removeLine')
             .duration(trans_duration1/2)
@@ -219,12 +212,16 @@ $(function() {
           .ease(d3.easePolyInOut)
           .attr("y2", function(d){return y(d.n_readings);})
 
-          //console.log('end of change to time series plot')
+
         }
-      } //closing bracket of changeView()
+
+      }
 
 
       var plot_ = function() {
+
+
+
         var startDate = d3.min(data, function(d) { return d.Date; });
         var endDate = d3.max(data, function(d) { return d.Date; });
         x.domain([
@@ -236,8 +233,6 @@ $(function() {
           d3.max(data, function(d) { return d.n_readings; })
         ]);
 
-        //the linearGradient creates a vertical gradient
-        //to imply "good vs bad" values
         svg.append("linearGradient")
               .attr("id", "n_readings-gradient")
               .attr("gradientUnits", "userSpaceOnUse")
@@ -254,7 +249,7 @@ $(function() {
               .attr("offset", function(d) { return d.offset; })
               .attr("stop-color", function(d) { return d.color; });
 
-        // guide_lines for lollipop time series chart
+
         guide_lines = svg
         .selectAll('line')
         .data(data)
@@ -280,14 +275,13 @@ $(function() {
           return y(d.n_readings);
         })
         .style("fill","url(#n_readings-gradient)")
-        //add tooltip to each point
         .on("mouseover", function(d) {
           div.transition('tooltipon')
           .duration(100)
           .style("opacity", .9);
-          div	.html(formatDay(d.day) + "<br/>"  + formatTime(d.Date) + "<br/>Readings: " + d.n_readings)
-          .style("left", (d3.event.pageX-5) + "px")
-          .style("top", (d3.event.pageY - (14*3+5)) + "px");
+          div	.html(formatDay(d.day) + "<br/>"  + formatTime(d.Date) + "<br/>" + d.n_readings)
+          .style("left", (d3.event.pageX) + "px")
+          .style("top", (d3.event.pageY - 28) + "px");
         })
         .on("mouseout", function(d) {
           div.transition('tooltipoff')
@@ -295,9 +289,15 @@ $(function() {
           .style("opacity", 0);
         });
 
+
+
+
         var xAxis = d3.axisBottom(x)
         .scale(x)
         .tickFormat(formatTime);
+
+
+
 
         svg
         .append("g")
@@ -323,12 +323,14 @@ $(function() {
         .style("text-anchor", "middle")
         .text("Number Of Blood Glucose Readings");
 
-        //create button to toggle views
+
+
+
         d3.select("body")
         .append("button")
         .text("Change View: Group by Day")
         .on("click", function() {
-          //change the text of the button
+
           if (d3.select(this).text() == "Change View: Group by Day" ){
             d3.select(this).text("Change View: Time Series")
           } else {
@@ -336,7 +338,10 @@ $(function() {
           };
           changeView();
         });;
-      }; //end of plot_()
+
+      };
+
+
 
       var public = {
         "plot": plot_,
@@ -344,9 +349,10 @@ $(function() {
         "width": width_,
         "height": height_
       };
-      return public;
-    }; //end of project_viz_lib.nReadingsPlot()
 
+      return public;
+
+    };
     //For converting strings to Dates
     var parseTime = d3.timeParse("%Y-%m-%d");
     //For converting Dates to strings
@@ -356,22 +362,23 @@ $(function() {
       return ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][n];
     }
 
-
-    var rowProcessor = function(d) {
+    var rowConverter = function(d) {
       return { Date: parseTime(d.Date),
         n_readings: parseInt(d.BgReadings),
         day: parseTime(d.Date).getDay()
       };
     }
 
-    d3.csv("data/adherence.csv", rowProcessor, function(error, data) {
-      //console.log(data);
+    d3.csv("data/adherence.csv", rowConverter, function(error, data) {
+      //console.log(d3.min(data, function(d) { return d.Date; }));
+      //console.log(d3.max(data, function(d) { return d.Date; }));
+      console.log(data);
+
+
       var nReadingsPlot1 = project_viz_lib.nReadingsPlot();
       nReadingsPlot1.data(data);
       nReadingsPlot1.width(800);
       nReadingsPlot1.plot();
-
-      //add description of interactions added
       d3.text("data/description.txt", function(error, textData){
         console.log(textData)
         d3.select("body")
@@ -381,7 +388,6 @@ $(function() {
     });
   });
 
-//create tool tip div
   var div = d3.select("body").append("div")
   .attr("class", "tooltip")
   .style("opacity", 0);
